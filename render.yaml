@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: nick-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: nick-ai
+    healthCheckPath: /health
+    envVars:
+      - key: NICK_ENV
+        value: production
+      - key: NICK_PROVIDER
+        value: openai_compatible
+      - key: NICK_API_BASE
+        value: https://router.huggingface.co/v1
+      - key: NICK_MODEL
+        value: Qwen/Qwen2.5-7B-Instruct
+      - key: NICK_API_KEY
+        sync: false
+      - key: NICK_DATABASE_PATH
+        value: data/nick_ai.db
