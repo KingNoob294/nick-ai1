@@ -1,8 +1,16 @@
-from .config import load_settings
+import os
+
+import uvicorn
+
 
 def run() -> None:
-    settings = load_settings()
-    print(f"Nick AI {settings.environment} - foundation ready")
+    uvicorn.run(
+        "nick_ai.webapp:app",
+        host=os.getenv("HOST", "0.0.0.0"),
+        port=int(os.getenv("PORT", "8000")),
+        reload=os.getenv("NICK_ENV", "development") == "development",
+    )
+
 
 if __name__ == "__main__":
     run()
