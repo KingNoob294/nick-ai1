@@ -22,4 +22,4 @@ htmlcov/
 
 # Runtime
 logs/
-data/local/
+data/local/\ndata/*.db\ndata/*.sqlite*
