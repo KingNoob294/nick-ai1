@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Nick AI</title>
+  <style>
+    :root{color-scheme:dark;font-family:Tahoma,Arial,sans-serif;background:#0b1220;color:#e8eef8}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+    header{padding:18px 20px;background:#111c2e;border-bottom:1px solid #26354b}
+    header h1{margin:0;font-size:21px}header p{margin:7px 0 0;color:#a8b7cc;font-size:13px}
+    #status{font-size:12px;color:#9fb2cc;margin-top:8px}
+    main{width:min(850px,100%);margin:0 auto;flex:1;padding:18px;display:flex;flex-direction:column}
+    #messages{flex:1;display:flex;flex-direction:column;gap:12px;padding-bottom:18px}
+    .bubble{max-width:88%;padding:13px 15px;border-radius:16px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+    .user{align-self:flex-start;background:#1e416a}.assistant{align-self:flex-end;background:#17263b;border:1px solid #2a3d56}
+    .welcome{color:#aabbd0;text-align:center;margin:auto;line-height:2}
+    form{position:sticky;bottom:0;display:flex;gap:8px;padding:10px 0;background:#0b1220}
+    textarea{flex:1;resize:vertical;min-height:52px;max-height:150px;border-radius:13px;border:1px solid #344761;background:#111c2e;color:#fff;padding:13px;font:inherit}
+    button{border:0;border-radius:12px;padding:0 19px;background:#3277bd;color:white;font:inherit;font-weight:bold}
+    button:disabled{opacity:.5}footer{text-align:center;color:#778aa4;font-size:11px;padding:8px 12px 18px}
+    .error{color:#ffb4a9}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Nick AI</h1>
+  <p>دستیار شخصی هوشمند</p>
+  <div id="status">در حال بررسی اتصال…</div>
+</header>
+<main>
+  <section id="messages" aria-live="polite">
+    <div class="welcome">سلام، من نیک هستم.<br>پیامت را بنویس تا گفتگو را شروع کنیم.<br><small>برای ابزارهای داخلی، /help را بفرست.</small></div>
+  </section>
+  <form id="chat-form">
+    <textarea id="message" placeholder="پیام خود را بنویسید…" maxlength="8000" required></textarea>
+    <button id="send" type="submit">ارسال</button>
+  </form>
+</main>
+<footer>نسخه آزمایشی · گفتگوها در حافظه پایدار سرور ذخیره می‌شوند.</footer>
+<script>
+(() => {
+  const messages = document.getElementById('messages');
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('message');
+  const send = document.getElementById('send');
+  const status = document.getElementById('status');
+  let session = localStorage.getItem('nick_session');
+  if (!session) {
+    session = (crypto.randomUUID ? crypto.randomUUID() : 's' + Date.now() + Math.random().toString(16).slice(2));
+    localStorage.setItem('nick_session', session);
+  }
+  function bubble(text, role, error=false) {
+    const empty = messages.querySelector('.welcome');
+    if (empty) empty.remove();
+    const node = document.createElement('div');
+    node.className = 'bubble ' + role + (error ? ' error' : '');
+    node.textContent = text;
+    messages.appendChild(node);
+    node.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  fetch('/health').then(r => r.json()).then(data => {
+    status.textContent = 'متصل · ' + data.provider + ' · ' + data.model;
+  }).catch(() => { status.textContent = 'وضعیت سرور نامشخص'; });
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || send.disabled) return;
+    bubble(message, 'user');
+    input.value = '';
+    send.disabled = true;
+    send.textContent = '…';
+    try {
+      const response = await fetch('/api/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message,session_id:session})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'خطای ارتباط با سرور');
+      bubble(data.reply, 'assistant');
+    } catch (error) {
+      bubble('خطا: ' + error.message, 'assistant', true);
+    } finally {
+      send.disabled = false;
+      send.textContent = 'ارسال';
+      input.focus();
+    }
+  });
+})();
+</script>
+</body>
+</html>
