@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse\nfrom pathlib import Path
+from fastapi.responses import FileResponse
+from pathlib import Path
 from pydantic import BaseModel, Field
 
 from .agent import Agent
