@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse\nfrom pathlib import Path
 from pydantic import BaseModel, Field
 
 from .agent import Agent
@@ -61,7 +61,7 @@ def create_app(
 
     @app.get("/")
     def home():
-        return FileResponse("web/index.html")
+        return FileResponse(Path(__file__).resolve().parents[2] / "web" / "index.html")
 
     @app.post("/api/chat", response_model=ChatResponse)
     def chat(payload: ChatRequest, authorization: str | None = Header(default=None)):
